@@ -71,11 +71,7 @@ class WorldMeshCollision(WorldPrimitiveCollision):
 
     def _init_cache(self):
         """Initialize cache for storing meshes."""
-        if (
-            self.cache is not None
-            and "mesh" in self.cache
-            and (not self.cache["mesh"] in [None, 0])
-        ):
+        if self.cache is not None and "mesh" in self.cache and (self.cache["mesh"] not in [None, 0]):
             self._create_mesh_cache(self.cache["mesh"])
 
         return super()._init_cache()
@@ -116,9 +112,7 @@ class WorldMeshCollision(WorldPrimitiveCollision):
 
             self.collision_types["mesh"] = True
         if load_obb_obs:
-            super().load_collision_model(
-                world_model, env_idx, fix_cache_reference=fix_cache_reference
-            )
+            super().load_collision_model(world_model, env_idx, fix_cache_reference=fix_cache_reference)
         else:
             self.world_model = world_model
 
@@ -204,9 +198,7 @@ class WorldMeshCollision(WorldPrimitiveCollision):
             env_idx: Environment index to add mesh to.
         """
         if self._env_n_mesh[env_idx] >= self._mesh_tensor_list[0].shape[1]:
-            log_error(
-                "Cannot add new mesh as we are at mesh cache limit, increase cache limit in WorldMeshCollision"
-            )
+            log_error("Cannot add new mesh as we are at mesh cache limit, increase cache limit in WorldMeshCollision")
             return
 
         wp_mesh_data = self._load_mesh_into_cache(new_mesh)
@@ -268,21 +260,15 @@ class WorldMeshCollision(WorldPrimitiveCollision):
         """
         # create cache to store meshes, mesh poses and inverse poses
 
-        self._env_n_mesh = torch.zeros(
-            (self.n_envs), device=self.tensor_args.device, dtype=torch.int32
-        )
+        self._env_n_mesh = torch.zeros((self.n_envs), device=self.tensor_args.device, dtype=torch.int32)
 
-        obs_enable = torch.zeros(
-            (self.n_envs, mesh_cache), dtype=torch.uint8, device=self.tensor_args.device
-        )
+        obs_enable = torch.zeros((self.n_envs, mesh_cache), dtype=torch.uint8, device=self.tensor_args.device)
         obs_inverse_pose = torch.zeros(
             (self.n_envs, mesh_cache, 8),
             dtype=self.tensor_args.dtype,
             device=self.tensor_args.device,
         )
-        obs_ids = torch.zeros(
-            (self.n_envs, mesh_cache), device=self.tensor_args.device, dtype=torch.int64
-        )
+        obs_ids = torch.zeros((self.n_envs, mesh_cache), device=self.tensor_args.device, dtype=torch.int64)
 
         # warp requires uint64 for mesh indices, supports conversion from int64 to uint64
         self._mesh_tensor_list = [
@@ -733,7 +719,23 @@ class WorldMeshCollision(WorldPrimitiveCollision):
 
         return d_val
 
+    # def clear_cache(self):
+    #     """Delete all cuboid and mesh obstacles from the world."""
+    #     self._wp_mesh_cache = {}
+    #     if self._mesh_tensor_list is not None:
+    #         self._mesh_tensor_list[2][:] = 0
+    #     if self._env_n_mesh is not None:
+    #         self._env_n_mesh[:] = 0
+    #     if self._env_mesh_names is not None:
+    #         self._env_mesh_names = [[None for _ in range(self.cache["mesh"])] for _ in range(self.n_envs)]
+
+    #     super().clear_cache()
+
     def clear_cache(self):
+        """
+        modified by mingrui
+        Reference: https://github.com/NVlabs/curobo/issues/263#issuecomment-2113736187
+        """
         """Delete all cuboid and mesh obstacles from the world."""
         self._wp_mesh_cache = {}
         if self._mesh_tensor_list is not None:
@@ -741,9 +743,9 @@ class WorldMeshCollision(WorldPrimitiveCollision):
         if self._env_n_mesh is not None:
             self._env_n_mesh[:] = 0
         if self._env_mesh_names is not None:
-            self._env_mesh_names = [
-                [None for _ in range(self.cache["mesh"])] for _ in range(self.n_envs)
-            ]
+            for i in range(self.n_envs):
+                for j in range(len(self._env_mesh_names)):
+                    self._env_mesh_names[i][j] = None
 
         super().clear_cache()
 
